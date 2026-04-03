@@ -86,7 +86,7 @@ def run_geomanager_ingest(
         "-i",
         container,
         "python",
-        "manage.py",
+        "/climweb/web/src/climweb/manage.py",
         "process_geomanager_layer_directory",
         layer_dir_name,
     ]
