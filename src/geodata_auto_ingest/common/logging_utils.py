@@ -11,12 +11,13 @@ from .shell import ensure_dir
 def configure_logging(
     *,
     logger_name: str,
-    log_dir: Path,
+    log_dir: Path | str,
     log_file: str,
     max_bytes: int,
     backup_count: int,
     verbose: bool = False,
 ) -> logging.Logger:
+    log_dir = Path(log_dir)
     ensure_dir(log_dir)
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
