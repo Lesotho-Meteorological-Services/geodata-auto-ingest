@@ -5,6 +5,7 @@ import html
 import logging
 import re
 import shutil
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -15,7 +16,7 @@ class ChirpsNaming:
     def __init__(self, version_prefix: str) -> None:
         self.version_prefix = version_prefix
         self.file_re = re.compile(
-            rf"{re.escape(version_prefix)}\.(\d{{4}})\.(\d{{2}})\.([123])\.tif\.gz"
+            rf"{re.escape(version_prefix)}\.(\d{{4}})\.(\d{{2}})\.([123])\.tif(?:\.gz)?"
         )
         self.base_re = re.compile(
             rf"{re.escape(version_prefix)}\.(\d{{4}})\.(\d{{2}})\.([123])"
@@ -66,3 +67,27 @@ def gunzip_file(src: Path, dest: Path, overwrite: bool) -> None:
     LOG.info("Uncompressing %s -> %s", src, dest)
     with gzip.open(src, "rb") as gz_stream, dest.open("wb") as output_file:
         shutil.copyfileobj(gz_stream, output_file)
+
+
+def remote_file_name(base_url: str, base_name: str) -> str:
+    candidates = [f"{base_name}.tif.gz", f"{base_name}.tif"]
+    for candidate in candidates:
+        url = base_url.rstrip('/') + '/' + candidate
+        try:
+            request = urllib.request.Request(url, method='HEAD')
+            with urllib.request.urlopen(request):
+                return candidate
+        except Exception:
+            continue
+    raise RuntimeError(f'Neither {base_name}.tif.gz nor {base_name}.tif exists at {base_url}')
+
+
+def prepare_raster_from_remote(downloaded_path: Path, tif_dest: Path, overwrite: bool) -> None:
+    if downloaded_path.suffix == '.gz':
+        gunzip_file(downloaded_path, tif_dest, overwrite)
+    else:
+        if tif_dest.exists() and not overwrite:
+            LOG.info('Prepared tif exists, skipping: %s', tif_dest)
+            return
+        LOG.info('Copying %s -> %s', downloaded_path, tif_dest)
+        shutil.copy2(downloaded_path, tif_dest)
