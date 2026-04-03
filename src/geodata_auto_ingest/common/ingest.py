@@ -7,6 +7,11 @@ from pathlib import Path
 
 from .shell import ensure_dir, run, which_required
 
+from pathlib import Path
+import subprocess
+
+DEFAULT_MANAGE_PY = "/climweb/web/src/climweb/manage.py"
+
 LOG = logging.getLogger(__name__)
 
 
@@ -71,30 +76,32 @@ def stage_for_ingest(src: Path, ingest_dir: Path, ingest_name: str, overwrite: b
     LOG.info("Staged file for GeoManager ingest: %s", dest)
     return dest
 
-
 def run_geomanager_ingest(
     *,
     container: str,
     layer_dir_name: str,
-    overwrite: bool,
-    clip_to_boundary: bool,
+    overwrite: bool = False,
+    clip_to_boundary: bool = False,
+    manage_py: str = DEFAULT_MANAGE_PY,
 ) -> None:
-    which_required("docker")
-    command = [
+    cmd = [
         "docker",
         "exec",
         "-i",
         container,
         "python",
-        "/climweb/web/src/climweb/manage.py",
+        manage_py,
         "process_geomanager_layer_directory",
         layer_dir_name,
     ]
+
     if overwrite:
-        command.append("--overwrite")
+        cmd.append("--overwrite")
+
     if clip_to_boundary:
-        command.append("--clip")
-    run(command)
+        cmd.append("--clip")
+
+    subprocess.run(cmd, check=True)
 
 
 def geotiff_ingest_name(stem: str, iso_timestamp: str, suffix: str = ".tif") -> str:
