@@ -9,7 +9,8 @@ from geodata_auto_ingest.common.chirps import (
     ChirpsNaming,
     dekad_iso_timestamp,
     download_file,
-    gunzip_file,
+    prepare_raster_from_remote,
+    remote_file_name,
 )
 from geodata_auto_ingest.common.ingest import clip_geotiff, run_geomanager_ingest, stage_for_ingest
 from geodata_auto_ingest.common.logging_utils import configure_logging
@@ -83,17 +84,17 @@ def main() -> int:
     ensure_dir(clipped_dir)
     ensure_dir(args.ingest_dir)
 
-    compressed_name = f"{base_name}.tif.gz"
+    remote_name = remote_file_name(args.base_url, base_name)
     tif_name = f"{base_name}.tif"
     clipped_name = f"{base_name}-{args.country_suffix}.tif"
     ingest_name = f"{base_name}-{args.country_suffix}_{iso_timestamp}.tif"
 
-    compressed_path = raw_dir / compressed_name
+    downloaded_path = raw_dir / remote_name
     tif_path = raw_dir / tif_name
     clipped_path = clipped_dir / clipped_name
 
-    download_file(args.base_url.rstrip("/") + "/" + compressed_name, compressed_path, args.overwrite)
-    gunzip_file(compressed_path, tif_path, args.overwrite)
+    download_file(args.base_url.rstrip("/") + "/" + remote_name, downloaded_path, args.overwrite)
+    prepare_raster_from_remote(downloaded_path, tif_path, args.overwrite)
     clip_geotiff(tif_path, args.boundary, clipped_path, args.overwrite)
     ingest_path = stage_for_ingest(clipped_path, args.ingest_dir, ingest_name, args.overwrite)
 
