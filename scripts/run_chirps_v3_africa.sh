@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+LOCKFILE=/tmp/geodata_auto_ingest_chirps_v3.lock
+exec 9>"$LOCKFILE"
+flock -n 9 || { echo "Another CHIRPS v3 ingest run is already in progress."; exit 1; }
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${ENV_FILE:-${REPO_ROOT}/env/chirps_v3_africa.env}"
@@ -15,4 +19,16 @@ source "$ENV_FILE"
 
 export PYTHONPATH="${REPO_ROOT}/src:${PYTHONPATH:-}"
 
-python3 -m geodata_auto_ingest.sources.chirps_v3_africa   --latest   --base-url "$BASE_URL"   --version-prefix "$VERSION_PREFIX"   --boundary "$BOUNDARY"   --work-dir "$WORK_DIR"   --ingest-dir "$INGEST_DIR"   --layer-dir-name "$LAYER_DIR_NAME"   --container "$CONTAINER"   --log-dir "$LOG_DIR"   --log-file "$LOG_FILE"   --log-max-bytes "$LOG_MAX_BYTES"   --log-backup-count "$LOG_BACKUP_COUNT"   --overwrite
+python3 -m geodata_auto_ingest.sources.chirps_v3_africa \
+  --latest \
+  --base-url "$BASE_URL" \
+  --version-prefix "$VERSION_PREFIX" \
+  --boundary "$BOUNDARY" \
+  --work-dir "$WORK_DIR" \
+  --ingest-dir "$INGEST_DIR" \
+  --layer-dir-name "$LAYER_DIR_NAME" \
+  --container "$CONTAINER" \
+  --log-dir "$LOG_DIR" \
+  --log-file "$LOG_FILE" \
+  --log-max-bytes "$LOG_MAX_BYTES" \
+  --log-backup-count "$LOG_BACKUP_COUNT"
