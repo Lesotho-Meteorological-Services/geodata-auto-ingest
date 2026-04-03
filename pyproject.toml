@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geodata-auto-ingest"
+version = "0.3.0"
+description = "Automations for preparing and ingesting geospatial datasets into GeoManager/Climweb"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "OpenAI" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+netcdf-validation = ["xarray>=2023.0.0"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
