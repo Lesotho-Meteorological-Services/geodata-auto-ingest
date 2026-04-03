@@ -86,8 +86,13 @@ def prepare_raster_from_remote(downloaded_path: Path, tif_dest: Path, overwrite:
     if downloaded_path.suffix == '.gz':
         gunzip_file(downloaded_path, tif_dest, overwrite)
     else:
+        if downloaded_path.resolve() == tif_dest.resolve():
+            LOG.info('Downloaded tif already at destination, skipping copy: %s', tif_dest)
+            return
+
         if tif_dest.exists() and not overwrite:
             LOG.info('Prepared tif exists, skipping: %s', tif_dest)
             return
+
         LOG.info('Copying %s -> %s', downloaded_path, tif_dest)
         shutil.copy2(downloaded_path, tif_dest)
